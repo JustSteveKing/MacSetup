@@ -1,0 +1,277 @@
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+" -- Vundle -- "
+
+	set rtp+=~/.vim/bundle/Vundle.vim
+	call vundle#begin()
+	Plugin 'gmarik/Vundle.vim'
+
+	" Language support
+	Plugin 'pekepeke/titanium-vim'
+	Plugin 'jelera/vim-javascript-syntax'
+	Plugin 'pangloss/vim-javascript'
+	Plugin 'phalkunz/vim-ss'
+	Plugin 'andreshazard/vim-freemarker'
+	Plugin 'freitass/todo.txt-vim'
+
+	" GUI enhancements
+	Plugin 'tpope/vim-vinegar'
+	Plugin 'nathanaelkane/vim-indent-guides'
+	Plugin 'bling/vim-airline'
+
+	" Git
+	Plugin 'airblade/vim-gitgutter'
+	Plugin 'tpope/vim-fugitive'
+
+	" Utilities
+	Plugin 'Raimondi/delimitMate'
+	Plugin 'chrisbra/Colorizer'
+	Plugin 'tpope/vim-surround'
+	"Plugin 'valloric/youcompleteme' " ./install.py --tern-completer in youcompleteme dir
+	Plugin 'honza/vim-snippets'
+	Plugin 'ervandew/supertab'
+	let g:SuperTabDefaultCompletionType = "context"
+	Plugin 'sirver/ultisnips'
+	let g:UltiSnipsExpandTrigger="<tab>"
+	let g:UltiSnipsJumpForwardTrigger="<c-b>"
+	let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+	Plugin 'marijnh/tern_for_vim' " run npm install in tern_for_vim dir
+	Plugin 'kien/ctrlp.vim'
+	let g:ctrlp_map = '<c-p>'
+	let g:ctrlp_cmd = 'CtrlP'
+	let g:ctrlp_working_path_mode = 'ra'
+	set wildignore+=*/tmp/*,*.so,*.swp,*.zip
+	let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$'
+	let g:ctrlp_user_command = 'find %s -type f'
+	"Plugin 'jaxbot/browserlink.vim'  "<script src='http://127.0.0.1:9001/js/socket.js'></script>
+	Plugin 'scrooloose/syntastic' " plus install jsHint - npm install -g jshint
+	let g:syntastic_check_on_open=1
+	let g:syntastic_always_populate_loc_list = 1
+	Plugin 'craigemery/vim-autotag'
+	Plugin 'pthrasher/conqueterm-vim'
+
+	" Colour schemes
+	Plugin 'w0ng/vim-hybrid'
+	Plugin 'romainl/Apprentice'
+	Plugin 'noahfrederick/vim-hemisu'
+	Plugin 'chriskempson/vim-tomorrow-theme'
+	Plugin 'reewr/vim-monokai-phoenix'
+	Plugin 'kristijanhusak/vim-hybrid-material'
+	Plugin 'jdkanani/vim-material-theme'
+	Plugin 'altercation/vim-colors-solarized'
+	Plugin 'nanotech/jellybeans.vim'
+	Plugin 'lifepillar/vim-solarized8'
+	Plugin 'jacoborus/tender'
+	Plugin 'joshdick/onedark.vim'
+	Plugin 'reedes/vim-colors-pencil'
+	Plugin 'molok/vim-vombato-colorscheme'
+	Plugin 'nlknguyen/papercolor-theme'
+	Plugin 'tyrannicaltoucan/vim-quantum'
+	Plugin 'larsbs/vimterial'
+
+	call vundle#end()            " required
+	filetype plugin indent on    " required
+
+
+" -- Settings -- "
+
+	filetype indent on
+	colorscheme material-theme
+	syntax enable
+	set background=dark
+	set laststatus=2
+	set nowrap
+	set number
+	set relativenumber
+	set numberwidth=5
+	set shiftwidth=3
+	set tabstop=3
+	set shiftround
+	set diffopt+=vertical
+	set noswapfile
+	set nobackup
+	set nowritebackup
+	set showcmd
+	set incsearch
+	set cursorline
+	set splitbelow
+	set splitright
+	set mouse=a
+	set ttymouse=sgr
+	set tags=./tags;/ " Set ctags to look until it finds a tags file
+	set listchars=tab:»·,trail:·,nbsp:· " Display extra whitespace - use :set list and :set nolist to toggle
+	set ignorecase
+	set hidden
+	set linespace=3
+	set wildmenu
+	let mapleader=","
+
+	" Non terminal
+	if has("gui_running")
+		au GUIEnter * set vb t_vb=
+		set transparency=3
+		set guioptions-=L
+		set guioptions-=r
+	endif
+
+	" Airline
+	let g:airline_powerline_fonts = 1
+	let g:airline_theme='ski'
+	let g:airline#extensions#tabline#enabled = 1
+	let g:airline#extensions#tabline#fnamemod = ':t'
+	let g:airline#extensions#tabline#show_buffers = 0
+	let g:airline#extensions#tabline#show_tab_type = 0
+	let g:airline#extensions#tabline#tab_min_count = 2
+
+
+" -- Methods -- "
+
+	function! TextEnableCodeSnip(filetype,start,end,textSnipHl) abort
+		let ft=toupper(a:filetype)
+		let group='textGroup'.ft
+		if exists('b:current_syntax')
+			let s:current_syntax=b:current_syntax
+			" Remove current syntax definition, as some syntax files (e.g. cpp.vim)
+			" do nothing if b:current_syntax is defined.
+			unlet b:current_syntax
+		endif
+		execute 'syntax include @'.group.' syntax/'.a:filetype.'.vim'
+		try
+			execute 'syntax include @'.group.' after/syntax/'.a:filetype.'.vim'
+		catch
+		endtry
+		if exists('s:current_syntax')
+			let b:current_syntax=s:current_syntax
+		else
+			unlet b:current_syntax
+		endif
+		execute 'syntax region textSnip'.ft.'
+		\ matchgroup='.a:textSnipHl.'
+		\ start="'.a:start.'" end="'.a:end.'"
+		\ contains=@'.group
+	endfunction
+
+	" Tab completion (will insert tab at beginning of line, will use completion " if not at beginning)
+	set wildmode=list:longest,list:full
+	function! InsertTabWrapper()
+		let col = col('.') - 1
+		if !col || getline('.')[col - 1] !~ '\k'
+			return "\<tab>"
+		else
+			return "\<c-p>"
+		endif
+	endfunction
+	"inoremap <Tab> <c-r>=InsertTabWrapper()<cr>
+
+
+" -- Tweaks -- "
+
+	" auto-reload vimrc on change & refresh airline theme
+	augroup reload_vimrc
+		autocmd!
+		autocmd BufWritePost $MYVIMRC source $MYVIMRC | AirlineRefresh
+		autocmd BufWritePost $MYVIMRC AirlineRefresh
+	augroup END
+
+	" Set working directory to current file
+	au BufEnter * silent! lcd %:p:h | vnoremap <tab> >gv
+
+	" Enable full javascript highlighting within all files between <script> tags
+	au Syntax * call TextEnableCodeSnip('javascript', '<script', '</script>', 'SpecialComment')
+
+	" Force filetypes to conform to particular syntax
+	au BufNewFile,BufRead *.tss set filetype=javascript
+
+	" Hide tilde and nontext characters
+	hi nontext ctermfg=bg guifg=bg cterm=NONE gui=NONE
+
+	" Colorscheme edits
+	hi Comment gui=italic
+	hi PreProc gui=bold
+	hi LineNr gui=italic
+	hi Directory gui=italic
+	hi CursorLineNr gui=italic guifg=White
+
+	" Toggle number line based on window focus
+	augroup BgHighlight
+		au!
+		au WinEnter * set number relativenumber
+		au WinLeave * set nonumber norelativenumber
+	augroup END
+
+	" Set font size based on screen size when vertical height is greater than 1440
+	if has('mac')
+		if system("osascript -e 'tell application \"Finder\" to get bounds of window of desktop' | cut -d ' ' -f 4") > 1440
+			set guifont=Hack:h17
+		else
+			set guifont=Hack:h13
+		endif
+	endif
+
+
+" -- Key mappings -- "
+
+	" Simple HTML elements
+	imap <Leader><RETURN> <br />
+	imap <Leader><SPACE> &nbsp;
+	imap <Leader>£ &pound;
+	imap <Leader>& &amp;
+
+	" Comments
+	inoremap !! <!--  --><esc>3hi
+	inoremap ** /* --  -- */<esc>5hi
+	vnoremap <Leader>! <ESC>`<O<!--<ESC>`>o--><ESC>"
+	vnoremap <Leader>* <ESC>`<O/*<ESC>`>o*/<ESC>"
+	inoremap <D-/> <ESC>I//
+
+	" Inline elements
+	vmap <Leader>i \"zs<em><C-R>z</em><ESC>"
+	imap <Leader>i <em>skiVim</em><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	vmap <Leader>a \"zs<a href=\"skiVim\"><C-R>z</a><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	imap <Leader>a <a href="skiVim"></a><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	vmap <Leader>s \"zs<spanskiVim><C-R>z</span><ESC><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	imap <Leader>s <span>skiVim</span><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+
+	" block elements
+	vmap <Leader>d <ESC>`<O<div id="skiVim"><ESC>gv<tab><ESC>`>o<Del></div><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	nmap <Leader>d O<div id="skiVim"><ESC><down>I<tab><ESC>o<Del></div><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	imap <Leader>d <div id="skiVim"><cr><tab><cr><Del></div><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	vmap <Leader>u <tab><ESC>`<w<c-q>`>A</li><ESC>gvI<li><ESC>`<O<Del><ul><ESC>`>o<Del></ul><esc>"
+	nmap <Leader>u O<ul><ESC><down>I<tab><li><ESC>A</li><ESC>o<Del></ul><esc>"
+	imap <Leader>u <ul><cr><tab><li>skiVim</li><cr><Del></ul><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+	vmap <Leader>p <ESC>`<O<p><ESC>gv<tab><ESC>`>o<Del></p><ESC>"
+	nmap <Leader>p O<p><ESC><down>I<tab><ESC>o<Del></p><esc>"
+	imap <Leader>p <p><cr><tab>skiVim<cr><Del></p><esc>?skiVim<cr>:call feedkeys("ves")<cr>
+
+	" Useful
+	imap <Leader>b <ESC>:CtrlPBuffer<cr>
+	nmap <Leader>b :CtrlPBuffer<cr>
+	vnoremap <tab> >gv
+	nnoremap <tab> >>
+	vnoremap <s-tab> <gv
+	nnoremap <s-tab> <<
+	inoremap <c-RETURN> <cr><ESC>O
+	imap <C-l> <esc>/""\\|\S<\/\\|^\?\t$\\|^$\\|\%$<cr>:let @/=""<cr>a
+	nmap <C-l> /""\\|\S<\/\\|^\?\t$\\|^$\\|\%$<cr>:let @/=""<cr>a
+
+	" Function Keys
+	"   F1 Help
+	"   F2 Set filetype to html
+	"   F3 Toggle special characters
+	"   F4 Toggle colours
+	"   F5 Bash
+	"   F6 Remove trailing spaces
+	"   F7 Toggle obscure text
+	"   F9 Edit vimrc
+	nmap <F2> :set filetype=html<RETURN>
+	imap <F2> <esc>:set filetype=html<RETURN>
+	nmap <F3> :set list!<RETURN><Leader>ig
+	nmap <F4> :ColorToggle<RETURN>
+	imap <F4> <esc>:ColorToggle<RETURN>
+	nmap <F5> :ConqueTermSplit bash<RETURN>
+	imap <F5> <esc>:ConqueTermSplit bash<RETURN>
+	nnoremap <silent> <F6> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar>:nohl<CR>
+	map <F7> ggVGg?
+	imap <F7> <esc>ggVGg?
+	nnoremap <F9> :tabedit $MYVIMRC<cr>
