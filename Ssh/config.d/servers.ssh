@@ -1,3 +1,4 @@
 Host servername
 	HostName www.server.com
 	User username
+	ForwardAgent yes
